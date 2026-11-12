@@ -1,0 +1,39 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        "host": {
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && $room.matches(/^[A-Z0-9]{4,10}$/)"
+        },
+        "state": {
+          ".write": "auth != null && root.child('rooms/' + $room + '/host').val() === auth.uid"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/' + $room + '/host').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 16"
+          }
+        },
+        "questions": {
+          "$qid": {
+            ".write": "auth != null && (root.child('rooms/' + $room + '/host').val() === auth.uid || (!data.exists() && newData.child('author').val() === auth.uid && newData.child('by').val() === auth.uid && !newData.hasChild('answer') && root.child('rooms/' + $room + '/players/' + auth.uid).exists() && root.child('rooms/' + $room + '/state/phase').val() === 'question'))",
+            ".validate": "newData.hasChildren(['text', 'by', 'author', 'round']) && newData.child('text').isString() && newData.child('text').val().length >= 1 && newData.child('text').val().length <= 120"
+          }
+        },
+        "buzz": {
+          "$key": {
+            ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid && root.child('rooms/' + $room + '/players/' + auth.uid).exists() && root.child('rooms/' + $room + '/state/phase').val() === 'buzz' && root.child('rooms/' + $room + '/state/open').val() === true && root.child('rooms/' + $room + '/state/lockKey').val() === $key && !root.child('rooms/' + $room + '/state/excluded/' + auth.uid).exists()",
+            ".validate": "newData.hasChildren(['uid', 'at']) && newData.child('at').val() === now"
+          }
+        }
+      }
+    },
+    "hosts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
